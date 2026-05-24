@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1600">
+<title>ProPortal – Splitter Mockup</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',sans-serif; font-size:13px; background:#f0f2f5; overflow:hidden; }
+
+  /* ─── ROOT LAYOUT ─── */
+  .root { display:flex; width:1600px; height:900px; background:#fff; }
+
+  /* ─── LEFT SIDEBAR ─── */
+  .sidebar {
+    width:210px; min-width:210px;
+    background:#1e2a3a;
+    color:#c5cfe0;
+    display:flex; flex-direction:column;
+    user-select:none;
+  }
+  .sidebar-logo {
+    padding:18px 16px 12px;
+    font-size:20px; font-weight:700; color:#fff;
+    border-bottom:1px solid #2d3e54;
+    letter-spacing:.5px;
+  }
+  .sidebar-logo span { color:#4fc3f7; margin-right:6px; }
+  .sidebar-section { padding:10px 14px 4px; font-size:10px; color:#7a8ea8; letter-spacing:1px; font-weight:600; }
+  .sidebar-item {
+    padding:9px 16px; cursor:pointer; display:flex; align-items:center; gap:8px;
+    border-radius:4px; margin:1px 6px; color:#b0bec5; font-size:12.5px;
+  }
+  .sidebar-item:hover { background:#2d3e54; color:#fff; }
+  .sidebar-item.active { background:#2d3e54; color:#fff; }
+  .priority-btn {
+    margin:2px 6px; padding:7px 14px; border-radius:20px; cursor:pointer;
+    font-size:12px; display:flex; align-items:center; gap:7px; color:#b0bec5;
+  }
+  .priority-btn.all { background:#1abc9c; color:#fff; font-weight:600; }
+  .priority-btn .dot { width:9px; height:9px; border-radius:50%; display:inline-block; }
+  .dot-red    { background:#e74c3c; }
+  .dot-orange { background:#f39c12; }
+  .dot-blue   { background:#3498db; }
+  .sidebar-spacer { flex:1; }
+  .sidebar-new-btn {
+    margin:10px 10px 6px; padding:11px; background:#2196f3; color:#fff;
+    border-radius:5px; text-align:center; font-weight:600; font-size:12.5px; cursor:pointer;
+  }
+  .sidebar-status {
+    padding:8px 14px 12px; font-size:11px; color:#7a8ea8; display:flex; align-items:center; gap:5px;
+  }
+  .status-dot { width:8px; height:8px; border-radius:50%; background:#2ecc71; }
+
+  /* ─── MAIN CONTENT ─── */
+  .main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+  /* ─── TOP BAR ─── */
+  .topbar {
+    background:#fff; border-bottom:1px solid #e0e0e0;
+    padding:8px 18px; display:flex; align-items:center; gap:14px;
+    min-height:50px;
+  }
+  .pomodoro-label { font-size:11.5px; color:#666; }
+  .pomodoro-time { font-size:22px; font-weight:700; color:#e53935; font-family:'Courier New',monospace; }
+  .btn-focus {
+    background:#4caf50; color:#fff; border:none; border-radius:4px;
+    padding:6px 16px; font-size:12.5px; font-weight:600; cursor:pointer;
+  }
+  .dashboard-cards { display:flex; gap:10px; margin-left:auto; }
+  .dash-card {
+    background:#fff; border:1px solid #e8e8e8; border-radius:6px;
+    padding:8px 16px; text-align:center; min-width:90px;
+    box-shadow:0 1px 3px rgba(0,0,0,.06);
+  }
+  .dash-card .title { font-size:11px; color:#888; font-weight:600; white-space:nowrap; }
+  .dash-card .val { font-size:26px; font-weight:700; margin-top:2px; }
+  .val-orange { color:#f57c00; }
+  .val-blue   { color:#1976d2; }
+  .val-green  { color:#388e3c; }
+  .val-purple { color:#7b1fa2; }
+
+  /* pie chart stub */
+  .pie-wrap {
+    width:90px; height:90px; border-radius:50%; margin-left:10px;
+    background: conic-gradient(#e53935 0% 55%, #f9a825 55% 72%, #43a047 72% 100%);
+    position:relative;
+  }
+  .pie-wrap::after {
+    content:''; position:absolute; width:48px; height:48px; background:#fff;
+    border-radius:50%; top:50%; left:50%; transform:translate(-50%,-50%);
+  }
+
+  /* ─── CONTENT ROW ─── */
+  .content-row { flex:1; display:flex; overflow:hidden; }
+
+  /* ─── TABLE PANEL ─── */
+  .table-panel { flex:1; display:flex; flex-direction:column; overflow:hidden; background:#fff; }
+  .search-bar {
+    padding:8px 14px; border-bottom:1px solid #e8e8e8; display:flex; align-items:center; gap:8px;
+  }
+  .search-bar input {
+    border:1px solid #ddd; border-radius:4px; padding:5px 10px; font-size:12.5px;
+    width:280px; color:#555;
+  }
+  table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  thead th {
+    background:#f5f5f5; border-bottom:2px solid #e0e0e0;
+    padding:8px 10px; text-align:left; font-weight:600; color:#444;
+    white-space:nowrap;
+  }
+  tbody tr { border-bottom:1px solid #f0f0f0; }
+  tbody tr:nth-child(odd) { background:#fafafa; }
+  tbody tr.row-red    { background:#fff5f5 !important; }
+  tbody tr.row-yellow { background:#fffde7 !important; }
+  tbody tr.row-blue   { background:#f3f8ff !important; }
+  tbody tr.row-green  { background:#f1f8e9 !important; }
+  td { padding:7px 10px; color:#333; }
+  .badge {
+    display:inline-block; padding:2px 9px; border-radius:10px;
+    font-size:11px; font-weight:600;
+  }
+  .badge-devam  { background:#fff3e0; color:#e65100; border:1px solid #ffcc80; }
+  .badge-yap    { background:#e3f2fd; color:#1565c0; border:1px solid #90caf9; }
+  .badge-bitti  { background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; }
+  .progress-bar { background:#e0e0e0; border-radius:8px; height:18px; width:80px; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff; }
+  .kalan-red  { color:#c62828; font-weight:700; }
+  .kalan-green{ color:#2e7d32; font-weight:700; }
+  .kalan-gray { color:#777; font-style:italic; }
+  .oncelik-dot{ display:flex; align-items:center; gap:5px; }
+
+  /* ═══════════════════════════════════════════
+     VERTICAL SPLITTER  (table ↔ right panel)
+  ═══════════════════════════════════════════ */
+  .v-splitter {
+    width:14px; min-width:14px; max-width:14px;
+    background: linear-gradient(to right, #d8dde6, #eaecf0, #d8dde6);
+    border-left:1px solid #c4c9d4;
+    border-right:1px solid #c4c9d4;
+    display:flex; flex-direction:column;
+    align-items:center;
+    cursor:col-resize;
+    position:relative;
+    box-shadow: inset 1px 0 2px rgba(255,255,255,.6), inset -1px 0 2px rgba(0,0,0,.07);
+  }
+  /* etched grooves running full height */
+  .v-splitter::before {
+    content:'';
+    position:absolute; top:0; left:50%; transform:translateX(-50%);
+    width:2px; height:100%;
+    background: repeating-linear-gradient(
+      to bottom,
+      #bfc5cf 0px, #bfc5cf 3px,
+      transparent 3px, transparent 7px
+    );
+    opacity:.4;
+  }
+
+  .v-handle-wrap {
+    position:absolute; top:30%; transform:translateY(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    z-index:10;
+  }
+  .v-handle {
+    width:40px; padding:5px 0;
+    background: linear-gradient(135deg, #e8eaed 0%, #d0d3da 40%, #e8eaed 100%);
+    border:1px solid #b0b5bf;
+    border-radius:5px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    box-shadow: 0 2px 5px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.7);
+    cursor:col-resize;
+  }
+  .grip-dot {
+    width:4px; height:4px; border-radius:50%;
+    background: linear-gradient(135deg, #888, #bbb);
+    box-shadow: 0 1px 1px rgba(0,0,0,.3);
+  }
+  .grip-row { display:flex; gap:3px; }
+
+  /* Simulated mouse cursor on vertical handle */
+  .cursor-v {
+    position:absolute;
+    top:calc(30% - 32px);
+    left:50%;
+    transform:translateX(-50%);
+    z-index:20;
+    pointer-events:none;
+  }
+  .cursor-v svg { filter: drop-shadow(1px 2px 3px rgba(0,0,0,.5)); }
+
+  /* ═══════════════════════════════════════════
+     RIGHT PANEL
+  ═══════════════════════════════════════════ */
+  .right-panel {
+    width:320px; min-width:320px;
+    display:flex; flex-direction:column;
+    background:#f7f8fa; border-left:none;
+    overflow:hidden;
+  }
+
+  /* Yaklaşan Teslimler */
+  .panel-block {
+    display:flex; flex-direction:column;
+    border-bottom:1px solid #e0e0e0;
+    background:#fff;
+  }
+  .panel-title {
+    padding:7px 10px; font-size:11.5px; font-weight:700; color:#444;
+    background:#f5f5f5; border-bottom:1px solid #e8e8e8;
+    display:flex; align-items:center; gap:5px;
+  }
+  .panel-title .icon { font-size:12px; }
+  .deadline-item {
+    padding:7px 10px; font-size:12px; color:#555;
+    border-bottom:1px solid #f5f5f5;
+    display:flex; align-items:center; gap:6px;
+  }
+  .deadline-warn { color:#e65100; }
+
+  /* Pie chart in top-right */
+  .pie-section {
+    display:flex; align-items:center; gap:12px;
+    padding:10px 12px;
+    background:#fff; border-bottom:1px solid #e0e0e0;
+  }
+  .pie-mini {
+    width:80px; height:80px; border-radius:50%; flex-shrink:0;
+    background: conic-gradient(#e53935 0% 55%, #f9a825 55% 72%, #43a047 72% 100%);
+    position:relative;
+  }
+  .pie-mini::after {
+    content:''; position:absolute; width:40px; height:40px; background:#fff;
+    border-radius:50%; top:50%; left:50%; transform:translate(-50%,-50%);
+  }
+  .pie-legend { font-size:11px; color:#555; display:flex; flex-direction:column; gap:4px; }
+  .legend-row { display:flex; align-items:center; gap:5px; }
+  .legend-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+
+  /* Hızlı Karalama */
+  .scratch-panel { flex:1; display:flex; flex-direction:column; background:#fff; min-height:180px; }
+  .scratch-title {
+    padding:7px 10px; font-size:11.5px; font-weight:700; color:#444;
+    background:#f5f5f5; border-bottom:1px solid #e8e8e8;
+    display:flex; align-items:center; gap:5px;
+  }
+  .scratch-area {
+    flex:1; padding:6px 8px; font-size:12px; color:#555;
+    resize:none; overflow-y:auto; border:none; outline:none;
+    font-family:'Segoe UI',sans-serif;
+    background:#fff;
+    line-height:1.5;
+  }
+  .scratch-buttons {
+    display:flex; gap:0; border-top:1px solid #e8e8e8;
+  }
+  .scratch-btn {
+    flex:1; padding:7px 0; font-size:11.5px; font-weight:600;
+    background:#e8e8e8; color:#444; border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:4px;
+  }
+  .scratch-btn:first-child { border-right:1px solid #d0d0d0; }
+  .scratch-btn:hover { background:#d5d5d5; }
+
+  /* ═══════════════════════════════════════════
+     HORIZONTAL SPLITTER  (scratch ↔ activities)
+  ═══════════════════════════════════════════ */
+  .h-splitter {
+    height:14px; min-height:14px; max-height:14px;
+    background: linear-gradient(to bottom, #d8dde6, #eaecf0, #d8dde6);
+    border-top:1px solid #c4c9d4;
+    border-bottom:1px solid #c4c9d4;
+    display:flex; align-items:center; justify-content:center;
+    cursor:row-resize;
+    position:relative;
+    box-shadow: inset 0 1px 2px rgba(255,255,255,.6), inset 0 -1px 2px rgba(0,0,0,.07);
+    overflow:visible;
+    z-index:5;
+  }
+  /* etched grooves running full width */
+  .h-splitter::before {
+    content:'';
+    position:absolute; top:50%; left:0; transform:translateY(-50%);
+    width:100%; height:2px;
+    background: repeating-linear-gradient(
+      to right,
+      #bfc5cf 0px, #bfc5cf 3px,
+      transparent 3px, transparent 7px
+    );
+    opacity:.4;
+  }
+
+  .h-handle-wrap {
+    position:absolute; left:50%; transform:translateX(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    z-index:10;
+  }
+  .h-handle {
+    height:40px; padding:0 5px;
+    background: linear-gradient(135deg, #e8eaed 0%, #d0d3da 40%, #e8eaed 100%);
+    border:1px solid #b0b5bf;
+    border-radius:5px;
+    display:flex; flex-direction:row; align-items:center; justify-content:center; gap:3px;
+    box-shadow: 0 2px 5px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.7);
+    cursor:row-resize;
+  }
+  .grip-col { display:flex; flex-direction:column; gap:3px; }
+
+  /* Simulated mouse cursor on horizontal handle */
+  .cursor-h {
+    position:absolute;
+    left:calc(50% + 20px);
+    top:50%;
+    transform:translateY(-50%);
+    z-index:20;
+    pointer-events:none;
+  }
+  .cursor-h svg { filter: drop-shadow(1px 2px 3px rgba(0,0,0,.5)); }
+
+  /* Son Aktiviteler */
+  .activity-panel { height:160px; display:flex; flex-direction:column; background:#fff; }
+  .activity-title {
+    padding:7px 10px; font-size:11.5px; font-weight:700; color:#444;
+    background:#f5f5f5; border-bottom:1px solid #e8e8e8;
+    display:flex; align-items:center; gap:5px;
+  }
+  .activity-area {
+    flex:1; padding:6px 10px; overflow-y:auto;
+    font-size:11px; color:#777; line-height:1.7;
+  }
+
+  /* ─── COLUMN: "Kalan Gün" colored cells ─── */
+  td.kalan { text-align:center; }
+</style>
+</head>
+<body>
+<div class="root">
+
+  <!-- ════════════ SIDEBAR ════════════ -->
+  <div class="sidebar">
+    <div class="sidebar-logo"><span>⚡</span>ProPortal</div>
+
+    <div class="sidebar-section">KATEGORİ</div>
+    <div class="sidebar-item active">🏠 Ana Sayfa</div>
+    <div class="sidebar-item">🎓 Okul</div>
+    <div class="sidebar-item">💼 İş</div>
+    <div class="sidebar-item">👤 Kişisel</div>
+    <div class="sidebar-item">📋 Genel</div>
+
+    <div class="sidebar-section" style="margin-top:8px;">ÖNCELİK FİLTRESİ</div>
+    <div class="priority-btn all">⬤ Tümü</div>
+    <div class="priority-btn"><span class="dot dot-red"></span> Yüksek</div>
+    <div class="priority-btn"><span class="dot dot-orange"></span> Orta</div>
+    <div class="priority-btn"><span class="dot dot-blue"></span> Düşük</div>
+
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-new-btn">Yeni Kayıt (Ctrl+N)</div>
+    <div class="sidebar-status"><span class="status-dot"></span>Veritabanı: Bağlı</div>
+  </div>
+
+  <!-- ════════════ MAIN ════════════ -->
+  <div class="main">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <span class="pomodoro-label">⏱ Pomodoro:</span>
+      <span class="pomodoro-time">25:00</span>
+      <button class="btn-focus">▶ Odaklan</button>
+
+      <div class="dashboard-cards">
+        <div class="dash-card"><div class="title">Toplam</div><div class="val val-orange">6</div></div>
+        <div class="dash-card"><div class="title">Bekleyen</div><div class="val val-orange">4</div></div>
+        <div class="dash-card"><div class="title">Devam Eden</div><div class="val val-blue">1</div></div>
+        <div class="dash-card"><div class="title">Tamamlanan</div><div class="val val-green">1</div></div>
+        <div class="dash-card"><div class="title">Toplam Bütçe</div><div class="val val-purple" style="font-size:20px;margin-top:6px;">10.000 ₺</div></div>
+      </div>
+
+      <!-- pie chart stub in topbar -->
+      <div class="pie-wrap" style="width:74px;height:74px;margin-left:8px;"></div>
+    </div>
+
+    <!-- CONTENT ROW -->
+    <div class="content-row">
+
+      <!-- TABLE PANEL -->
+      <div class="table-panel">
+        <div class="search-bar">
+          <span style="color:#888;font-size:13px;">🔍</span>
+          <span style="color:#888;font-size:12.5px;font-weight:600;">Ara:</span>
+          <input type="text" placeholder="Görev, kişi veya etiket...">
+        </div>
+        <div style="overflow:auto;flex:1;">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>Kategori</th><th>Proje</th><th>Bütçe</th>
+              <th>Tarih &amp; Saat</th><th>Öncelik</th><th>Etiketler</th>
+              <th>İlerleme</th><th>Durum</th><th>Kalan Gün</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="row-blue">
+              <td>1</td><td>Okul</td><td>Görsel Prog...</td><td>-</td>
+              <td>26.05.2026</td>
+              <td><div class="oncelik-dot"><span class="dot dot-orange"></span>Orta</div></td>
+              <td></td>
+              <td><div class="progress-bar"><div class="progress-fill" style="width:0%;background:#9e9e9e;">%0</div></div></td>
+              <td><span class="badge badge-devam">Devam Ediyor</span></td>
+              <td class="kalan kalan-green">1 gün</td>
+            </tr>
+            <tr class="row-red">
+              <td>2</td><td>Okul</td><td>Yazılım Tes...</td><td>-</td>
+              <td>13.05.2026</td>
+              <td><div class="oncelik-dot"><span class="dot dot-orange"></span>Orta</div></td>
+              <td></td>
+              <td><div class="progress-bar"><div class="progress-fill" style="width:50%;background:#1976d2;">%50</div></div></td>
+              <td><span class="badge badge-yap">Yapılacak</span></td>
+              <td class="kalan kalan-red">Gecikti! 11g</td>
+            </tr>
+            <tr class="row-yellow">
+              <td>3</td><td>İş</td><td>Site İncelem...</td><td>10.000,00 ₺</td>
+              <td>13.05.2026</td>
+              <td><div class="oncelik-dot"><span class="dot dot-orange"></span>Orta</div></td>
+              <td></td>
+              <td><div class="progress-bar"><div class="progress-fill" style="width:0%;background:#9e9e9e;">%0</div></div></td>
+              <td><span class="badge badge-yap">Yapılacak</span></td>
+              <td class="kalan kalan-red">Gecikti! 11g</td>
+            </tr>
+            <tr class="row-green">
+              <td>4</td><td>Kişisel</td><td>AiHackathon</td><td>-</td>
+              <td>13.05.2026</td>
+              <td><div class="oncelik-dot"><span class="dot dot-orange"></span>Orta</div></td>
+              <td></td>
+              <td><div class="progress-bar"><div class="progress-fill" style="width:100%;background:#43a047;">%100</div></div></td>
+              <td><span class="badge badge-bitti">Bitti ✓</span></td>
+              <td class="kalan kalan-gray">✓ Tamamlandı</td>
+            </tr>
+            <tr class="row-blue">
+              <td>5</td><td>Okul</td><td>aaa</td><td>-</td>
+              <td>12.05.2026</td>
+              <td><div class="oncelik-dot"><span class="dot dot-blue"></span>Düşük</div></td>
+              <td></td>
+              <td><div class="progress-bar"><div class="progress-fill" style="width:0%;background:#9e9e9e;">%0</div></div></td>
+              <td><span class="badge badge-yap">Yapılacak</span></td>
+              <td class="kalan kalan-red">Gecikti! 12g</td>
+            </tr>
+            <tr class="row-red">
+              <td>6</td><td>Okul</td><td>Assembly</td><td>-</td>
+              <td>13.05.2026</td>
+              <td><div class="oncelik-dot"><span class="dot dot-red"></span>Yüksek</div></td>
+              <td></td>
+              <td><div class="progress-bar"><div class="progress-fill" style="width:0%;background:#9e9e9e;">%0</div></div></td>
+              <td><span class="badge badge-yap">Yapılacak</span></td>
+              <td class="kalan kalan-red">Gecikti! 11g</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════
+           VERTICAL SPLITTER  ←→ redesigned
+      ══════════════════════════════════ -->
+      <div class="v-splitter">
+
+        <!-- 3×3 dot metal grip handle — placed upper-center of the bar -->
+        <div class="v-handle-wrap">
+          <div class="v-handle">
+            <div class="grip-row"><div class="grip-dot"></div><div class="grip-dot"></div></div>
+            <div class="grip-row"><div class="grip-dot"></div><div class="grip-dot"></div></div>
+            <div class="grip-row"><div class="grip-dot"></div><div class="grip-dot"></div></div>
+            <div class="grip-row"><div class="grip-dot"></div><div class="grip-dot"></div></div>
+          </div>
+        </div>
+
+        <!-- Simulated mouse cursor: col-resize (↔) arrows -->
+        <div class="cursor-v">
+          <svg width="38" height="38" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg">
+            <!-- cursor body (arrow pointer) -->
+            <g transform="translate(2,2)">
+              <!-- shadow -->
+              <polygon points="4,4 4,28 10,22 14,32 17,31 13,21 21,21" fill="rgba(0,0,0,0.35)" transform="translate(2,2)"/>
+              <!-- white fill -->
+              <polygon points="4,4 4,28 10,22 14,32 17,31 13,21 21,21" fill="white" stroke="#333" stroke-width="1.5"/>
+            </g>
+            <!-- col-resize indicator: horizontal double arrow below cursor -->
+            <g transform="translate(7,26)">
+              <rect x="0" y="3" width="24" height="3" rx="1.5" fill="#1a1a2e"/>
+              <!-- left arrow -->
+              <polygon points="0,4.5 5,1 5,8" fill="#1a1a2e"/>
+              <!-- right arrow -->
+              <polygon points="24,4.5 19,1 19,8" fill="#1a1a2e"/>
+            </g>
+          </svg>
+        </div>
+
+      </div>
+
+      <!-- ════════════ RIGHT PANEL ════════════ -->
+      <div class="right-panel">
+
+        <!-- Yaklaşan Teslimler -->
+        <div class="panel-block" style="height:160px;">
+          <div class="panel-title"><span class="icon">⏰</span>Yaklaşan Teslimler (&lt; 7 gün)</div>
+          <div class="deadline-item"><span class="deadline-warn">⚠</span>Görsel Programlama → 26.05.2026 <em style="color:#888;font-size:11px;margin-left:4px;">(1 gün)</em></div>
+          <div style="flex:1;"></div>
+        </div>
+
+        <!-- Hızlı Karalama -->
+        <div class="scratch-panel">
+          <div class="scratch-title">📝 Hızlı Karalama</div>
+          <textarea class="scratch-area" readonly></textarea>
+          <div class="scratch-buttons">
+            <button class="scratch-btn">💾 Te...</button>
+            <button class="scratch-btn">⬇ İndi...</button>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════
+             HORIZONTAL SPLITTER  ↕ redesigned
+        ══════════════════════════════════ -->
+        <div class="h-splitter">
+
+          <!-- 3×3 dot metal grip handle — centered on the bar -->
+          <div class="h-handle-wrap">
+            <div class="h-handle">
+              <div class="grip-col"><div class="grip-dot"></div><div class="grip-dot"></div><div class="grip-dot"></div><div class="grip-dot"></div></div>
+              <div class="grip-col"><div class="grip-dot"></div><div class="grip-dot"></div><div class="grip-dot"></div><div class="grip-dot"></div></div>
+            </div>
+          </div>
+
+          <!-- Simulated mouse cursor: row-resize (↕) arrows -->
+          <div class="cursor-h">
+            <svg width="38" height="38" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg">
+              <!-- shadow -->
+              <polygon points="4,4 4,28 10,22 14,32 17,31 13,21 21,21" fill="rgba(0,0,0,0.35)" transform="translate(2,2)"/>
+              <!-- white cursor -->
+              <polygon points="4,4 4,28 10,22 14,32 17,31 13,21 21,21" fill="white" stroke="#333" stroke-width="1.5"/>
+              <!-- row-resize indicator: vertical double arrow to the right of cursor -->
+              <g transform="translate(23,7)">
+                <rect x="3" y="0" width="3" height="24" rx="1.5" fill="#1a1a2e"/>
+                <!-- up arrow -->
+                <polygon points="4.5,0 1,5 8,5" fill="#1a1a2e"/>
+                <!-- down arrow -->
+                <polygon points="4.5,24 1,19 8,19" fill="#1a1a2e"/>
+              </g>
+            </svg>
+          </div>
+
+        </div>
+
+        <!-- Son Aktiviteler -->
+        <div class="activity-panel">
+          <div class="activity-title">⏱ Son Aktiviteler</div>
+          <div class="activity-area">
+            <div>[24.05.2026 09:41] Görev Eklendi: Görsel Prog...</div>
+            <div>[24.05.2026 09:40] Görev Güncellendi: AiHackathon</div>
+            <div>[24.05.2026 09:38] Görev Eklendi: Assembly</div>
+            <div>[24.05.2026 09:35] Görev Eklendi: aaa</div>
+          </div>
+        </div>
+
+      </div><!-- /right-panel -->
+
+    </div><!-- /content-row -->
+  </div><!-- /main -->
+</div><!-- /root -->
+</body>
+</html>
