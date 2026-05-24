@@ -38,7 +38,8 @@ public class MainFrame extends JFrame {
     private TableRowSorter<DefaultTableModel> rowSorter;
 
     // --- Dashboard etiketleri ---
-    private JLabel lblTotal, lblTodo, lblInProgress, lblDone, lblTotalBudget;
+    private JLabel lblTotal, lblTodo, lblInProgress, lblDone;
+    private JLabel lblBudgetTotal, lblBudgetDone, lblBudgetInProg, lblBudgetTodo;
     private PieChartPanel pieChartPanel;
 
     // --- Filtreler ---
@@ -69,7 +70,7 @@ public class MainFrame extends JFrame {
     public MainFrame() {
         dao = new GorevDAO();
         setTitle("ProPortal - Kurumsal Yönetim & Ajanda Sistemi");
-        setSize(1500, 900);
+        setSize(1200, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         initUI();
@@ -90,7 +91,7 @@ public class MainFrame extends JFrame {
         JPanel sidebar = new JPanel();
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
         sidebar.setBackground(new Color(44, 62, 80));
-        sidebar.setPreferredSize(new Dimension(220, 0));
+        sidebar.setPreferredSize(new Dimension(210, 0));
         sidebar.setBorder(BorderFactory.createEmptyBorder(30, 15, 30, 15));
 
         JLabel logo = new JLabel("⚡ ProPortal");
@@ -157,17 +158,35 @@ public class MainFrame extends JFrame {
 
         sidebar.add(Box.createVerticalGlue());
 
+        // Pomodoro sidebar bölümü
+        sidebar.add(Box.createRigidArea(new Dimension(0, 8)));
+        JLabel pomSideLabel = new JLabel("  ⏱ POMODORO");
+        pomSideLabel.setForeground(new Color(149, 165, 166));
+        pomSideLabel.setFont(new Font("SansSerif", Font.BOLD, 11));
+        pomSideLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sidebar.add(pomSideLabel);
+        sidebar.add(Box.createRigidArea(new Dimension(0, 4)));
+        lblPomodoro.setFont(new Font("Monospaced", Font.BOLD, 22));
+        lblPomodoro.setForeground(new Color(231, 76, 60));
+        lblPomodoro.setAlignmentX(Component.CENTER_ALIGNMENT);
+        sidebar.add(lblPomodoro);
+        sidebar.add(Box.createRigidArea(new Dimension(0, 4)));
+        btnPomodoro.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnPomodoro.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+        sidebar.add(btnPomodoro);
+        sidebar.add(Box.createRigidArea(new Dimension(0, 8)));
+
         JButton btnThemeToggle = createSidebarButton("🌙 Karanlık Mod");
         btnThemeToggle.addActionListener(e -> toggleTheme(btnThemeToggle));
         sidebar.add(btnThemeToggle);
         add(sidebar, BorderLayout.WEST);
 
         // ---- ORTA İÇERİK ----
-        JPanel centerContainer = new JPanel(new BorderLayout(15, 15));
-        centerContainer.setBorder(BorderFactory.createEmptyBorder(20, 20, 10, 20));
+        JPanel centerContainer = new JPanel(new BorderLayout(8, 8));
+        centerContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 5, 10));
 
         // Üst: Pomodoro + Dashboard
-        JPanel topContainer = new JPanel(new BorderLayout(15, 0));
+        JPanel topContainer = new JPanel(new BorderLayout(5, 0));
 
         JPanel pomodoroPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         pomodoroPanel.setOpaque(false);
@@ -203,28 +222,62 @@ public class MainFrame extends JFrame {
                 logActivity("Odaklanma sayacı başlatıldı.");
             }
         });
-        pomodoroPanel.add(new JLabel("⏱️ Pomodoro: "));
-        pomodoroPanel.add(lblPomodoro);
-        pomodoroPanel.add(btnPomodoro);
-        topContainer.add(pomodoroPanel, BorderLayout.WEST);
+        // Dashboard istatistik kartları — tüm genişliği kullanır
+        JPanel dashboardStats = new JPanel(new GridLayout(1, 5, 8, 0));
+        lblTotal      = createDashboardLabel("Toplam",     "0", new Color(41,  128, 185), 28);
+        lblTodo       = createDashboardLabel("Bekleyen",   "0", new Color(231,  76,  60), 28);
+        lblInProgress = createDashboardLabel("Devam Eden", "0", new Color(243, 156,  18), 28);
+        lblDone       = createDashboardLabel("Tamamlanan", "0", new Color(39,  174,  96), 28);
 
-        // Dashboard istatistik kartları
-        JPanel dashboardStats = new JPanel(new GridLayout(1, 5, 15, 0));
-        lblTotal = createDashboardLabel("Toplam", "0", new Color(41, 128, 185));
-        lblTodo = createDashboardLabel("Bekleyen", "0", new Color(231, 76, 60));
-        lblInProgress = createDashboardLabel("Devam Eden", "0", new Color(243, 156, 18));
-        lblDone = createDashboardLabel("Tamamlanan", "0", new Color(39, 174, 96));
-        lblTotalBudget = createDashboardLabel("Toplam Bütçe", "0 ₺", new Color(142, 68, 173));
+        // Toplam Bütçe kartı — tek kutu, 4 satır
+        JPanel budgetCard = new JPanel(new BorderLayout(0, 2));
+        budgetCard.setOpaque(false);
+        budgetCard.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true),
+                BorderFactory.createEmptyBorder(8, 10, 8, 10)));
+
+        JLabel budgetTitle = new JLabel("Toplam Bütçe");
+        budgetTitle.setFont(new Font("SansSerif", Font.BOLD, 11));
+        budgetTitle.setForeground(Color.GRAY);
+        budgetTitle.setHorizontalAlignment(SwingConstants.CENTER);
+
+        lblBudgetTotal = new JLabel("0 ₺");
+        lblBudgetTotal.setFont(new Font("SansSerif", Font.BOLD, 20));
+        lblBudgetTotal.setForeground(new Color(142, 68, 173));
+        lblBudgetTotal.setHorizontalAlignment(SwingConstants.CENTER);
+
+        JPanel budgetRows = new JPanel(new GridLayout(3, 1, 0, 1));
+        budgetRows.setOpaque(false);
+
+        lblBudgetDone   = new JLabel("✓ Bitti: 0 ₺");
+        lblBudgetInProg = new JLabel("▶ Devam: 0 ₺");
+        lblBudgetTodo   = new JLabel("○ Bekleyen: 0 ₺");
+
+        for (JLabel lbl : new JLabel[]{lblBudgetDone, lblBudgetInProg, lblBudgetTodo}) {
+            lbl.setFont(new Font("SansSerif", Font.PLAIN, 11));
+            lbl.setHorizontalAlignment(SwingConstants.LEFT);
+        }
+        lblBudgetDone.setForeground(new Color(39, 174, 96));
+        lblBudgetInProg.setForeground(new Color(211, 84, 0));
+        lblBudgetTodo.setForeground(new Color(192, 57, 43));
+
+        budgetRows.add(lblBudgetDone);
+        budgetRows.add(lblBudgetInProg);
+        budgetRows.add(lblBudgetTodo);
+
+        budgetCard.add(budgetTitle,   BorderLayout.NORTH);
+        budgetCard.add(lblBudgetTotal, BorderLayout.CENTER);
+        budgetCard.add(budgetRows,    BorderLayout.SOUTH);
 
         dashboardStats.add(lblTotal.getParent());
         dashboardStats.add(lblTodo.getParent());
         dashboardStats.add(lblInProgress.getParent());
         dashboardStats.add(lblDone.getParent());
-        dashboardStats.add(lblTotalBudget.getParent());
+        dashboardStats.add(budgetCard);
         topContainer.add(dashboardStats, BorderLayout.CENTER);
 
         pieChartPanel = new PieChartPanel();
-        topContainer.add(pieChartPanel, BorderLayout.EAST);
+        // Pie chart sağ panelle birlikte kaldırıldı
         centerContainer.add(topContainer, BorderLayout.NORTH);
 
         // ---- TABLO ----
@@ -411,46 +464,11 @@ public class MainFrame extends JFrame {
         btnYenile.addActionListener(e -> { loadData(); logActivity("Veriler yenilendi."); });
         btnPDF.addActionListener(e -> exportToPDF());
 
-        // ---- SAĞ PANEL ----
-        JPanel rightPanel = new JPanel(new BorderLayout(0, 5));
-        rightPanel.setPreferredSize(new Dimension(300, 0));
-
-        // Yaklaşan teslimler
-        JPanel pnlDeadlines = new JPanel(new BorderLayout());
-        pnlDeadlines.setBorder(BorderFactory.createTitledBorder("⏰ Yaklaşan Teslimler (< 7 Gün)"));
-        rightPanelDeadlines = new JPanel();
-        rightPanelDeadlines.setLayout(new BoxLayout(rightPanelDeadlines, BoxLayout.Y_AXIS));
-        pnlDeadlines.add(new JScrollPane(rightPanelDeadlines), BorderLayout.CENTER);
-
-        // Hızlı notlar (Markdown Scratchpad)
-        JPanel pnlScratchpad = new JPanel(new BorderLayout());
-        scratchpadBorder = BorderFactory.createTitledBorder("📝 Hızlı Karalama");
-        pnlScratchpad.setBorder(scratchpadBorder);
+        // Scratchpad (gizli — sadece otomatik kayıt için tutulur, UI'da gösterilmez)
+        scratchpadBorder = BorderFactory.createTitledBorder("");
         txtScratch = new JTextArea();
-        txtScratch.setLineWrap(true);
-        txtScratch.setWrapStyleWord(true);
-        txtScratch.setFont(new Font("Monospaced", Font.PLAIN, 13));
-        JPanel pnlNotesButtons = new JPanel(new GridLayout(1, 2, 5, 0));
-        JButton btnClearMD = new JButton("🗑️ Temizle");
-        btnClearMD.setBackground(new Color(149, 165, 166)); btnClearMD.setForeground(Color.WHITE); btnClearMD.setFocusPainted(false);
-        btnClearMD.addActionListener(e -> txtScratch.setText(""));
-        JButton btnExportMD = new JButton("📥 İndir (.md)");
-        btnExportMD.setBackground(new Color(52, 73, 94)); btnExportMD.setForeground(Color.WHITE); btnExportMD.setFocusPainted(false);
-        btnExportMD.addActionListener(e -> exportMarkdown());
-        pnlNotesButtons.add(btnClearMD); pnlNotesButtons.add(btnExportMD);
-        pnlScratchpad.add(new JScrollPane(txtScratch), BorderLayout.CENTER);
-        pnlScratchpad.add(pnlNotesButtons, BorderLayout.SOUTH);
-
-        // Otomatik kayıt: 2 sn hareketsizlikte SQLite'a yazar
         scratchpadSaveTimer = new Timer(2000, e -> {
             dao.setSetting("scratchpad", txtScratch.getText());
-            scratchpadBorder.setTitle("📝 Hızlı Karalama ✓");
-            pnlScratchpad.repaint();
-            new Timer(2000, ev -> {
-                scratchpadBorder.setTitle("📝 Hızlı Karalama");
-                pnlScratchpad.repaint();
-                ((Timer) ev.getSource()).stop();
-            }) {{ setRepeats(false); start(); }};
             scratchpadSaveTimer.stop();
         });
         scratchpadSaveTimer.setRepeats(false);
@@ -461,39 +479,15 @@ public class MainFrame extends JFrame {
             public void changedUpdate(javax.swing.event.DocumentEvent e) { update(); }
         });
 
-        // Son Aktiviteler (Activity Log)
-        JPanel pnlActivityLog = new JPanel(new BorderLayout());
-        pnlActivityLog.setBorder(BorderFactory.createTitledBorder("🕐 Son Aktiviteler"));
+        // Activity log alanı (gizli)
         txtActivityLog = new JTextArea();
         txtActivityLog.setEditable(false);
-        txtActivityLog.setFont(new Font("Monospaced", Font.PLAIN, 11));
-        txtActivityLog.setLineWrap(true);
-        txtActivityLog.setWrapStyleWord(true);
-        txtActivityLog.setBackground(new Color(245, 245, 245));
-        pnlActivityLog.add(new JScrollPane(txtActivityLog), BorderLayout.CENTER);
 
-        // Sağ panel: 3 bölge — nested JSplitPane (fare ile sürüklenebilir)
-        JSplitPane innerSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pnlScratchpad, pnlActivityLog);
-        innerSplit.setResizeWeight(0.60);
-        innerSplit.setDividerSize(8);
-        innerSplit.setOneTouchExpandable(true);
-        innerSplit.setBorder(null);
+        // Yaklaşan teslimler paneli (gizli)
+        rightPanelDeadlines = new JPanel();
+        rightPanelDeadlines.setLayout(new BoxLayout(rightPanelDeadlines, BoxLayout.Y_AXIS));
 
-        JSplitPane outerSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pnlDeadlines, innerSplit);
-        outerSplit.setResizeWeight(0.35);
-        outerSplit.setDividerSize(8);
-        outerSplit.setOneTouchExpandable(true);
-        outerSplit.setBorder(null);
-
-        rightPanel.add(outerSplit);
-
-        // Ana bölünmüş panel
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, centerContainer, rightPanel);
-        splitPane.setResizeWeight(1.0);
-        splitPane.setDividerLocation(1100);
-        splitPane.setDividerSize(5);
-        splitPane.setBorder(null);
-        add(splitPane, BorderLayout.CENTER);
+        add(centerContainer, BorderLayout.CENTER);
 
         // ---- ALT DURUM ÇUBUĞU ----
         JPanel statusBar = new JPanel(new BorderLayout());
@@ -592,7 +586,7 @@ public class MainFrame extends JFrame {
 
         List<Gorev> gorevler = dao.getAllGorevler();
         int todo = 0, inProg = 0, done = 0;
-        double totalBudget = 0.0;
+        double budgetTodo = 0.0, budgetInProg = 0.0, budgetDone = 0.0;
         Date now = new Date();
 
         for (Gorev g : gorevler) {
@@ -606,11 +600,10 @@ public class MainFrame extends JFrame {
                 g.getIlerleme(), g.getDurum(), kalanGunStr
             };
             tableModel.addRow(row);
-            if (isIs) totalBudget += g.getUcret();
 
-            if ("Yapılacak".equals(g.getDurum())) todo++;
-            else if ("Devam Ediyor".equals(g.getDurum())) inProg++;
-            else if ("Bitti".equals(g.getDurum())) done++;
+            if ("Yapılacak".equals(g.getDurum())) { todo++; if (isIs) budgetTodo += g.getUcret(); }
+            else if ("Devam Ediyor".equals(g.getDurum())) { inProg++; if (isIs) budgetInProg += g.getUcret(); }
+            else if ("Bitti".equals(g.getDurum())) { done++; if (isIs) budgetDone += g.getUcret(); }
 
             // Yaklaşan teslimler paneli
             if (!"Bitti".equals(g.getDurum())) {
@@ -637,7 +630,10 @@ public class MainFrame extends JFrame {
             lblTodo.setText(String.valueOf(todo));
             lblInProgress.setText(String.valueOf(inProg));
             lblDone.setText(String.valueOf(done));
-            lblTotalBudget.setText(String.format("%.2f ₺", totalBudget));
+            lblBudgetTotal.setText(String.format("%,.0f ₺", budgetTodo + budgetInProg + budgetDone));
+            lblBudgetDone.setText(  "✓ Bitti: "    + String.format("%,.0f ₺", budgetDone));
+            lblBudgetInProg.setText("▶ Devam: "    + String.format("%,.0f ₺", budgetInProg));
+            lblBudgetTodo.setText(  "○ Bekleyen: " + String.format("%,.0f ₺", budgetTodo));
             if (pieChartPanel != null) pieChartPanel.updateData(todo, inProg, done);
         }
 
@@ -1079,23 +1075,23 @@ public class MainFrame extends JFrame {
         return btn;
     }
 
-    private JLabel createDashboardLabel(String title, String value, Color color) {
+    private JLabel createDashboardLabel(String title, String value, Color color, int valueFontSize) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(false);
         panel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true),
-                BorderFactory.createEmptyBorder(8, 10, 8, 10)));
+                BorderFactory.createEmptyBorder(8, 8, 8, 8)));
         JLabel lblTitle = new JLabel(title);
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 11));
         lblTitle.setForeground(Color.GRAY);
         lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
         lblTitle.setToolTipText(title);
         JLabel lblVal = new JLabel(value);
-        lblVal.setFont(new Font("SansSerif", Font.BOLD, 28));
+        lblVal.setFont(new Font("SansSerif", Font.BOLD, valueFontSize));
         lblVal.setForeground(color);
-        lblVal.setHorizontalAlignment(SwingConstants.RIGHT);
+        lblVal.setHorizontalAlignment(SwingConstants.CENTER);
         panel.add(lblTitle, BorderLayout.NORTH);
-        panel.add(lblVal, BorderLayout.SOUTH);
+        panel.add(lblVal, BorderLayout.CENTER);
         return lblVal;
     }
 }

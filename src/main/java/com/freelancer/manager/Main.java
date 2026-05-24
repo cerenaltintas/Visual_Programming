@@ -18,7 +18,11 @@ public class Main {
         }
 
         // 3. UI (Kullanıcı Arayüzü) Tasarımı Başlatılıyor
-        javax.swing.SwingUtilities.invokeLater(() -> new com.freelancer.manager.ui.MainFrame().setVisible(true));
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            com.freelancer.manager.ui.MainFrame frame = new com.freelancer.manager.ui.MainFrame();
+            frame.setVisible(true);
+            frame.setExtendedState(javax.swing.JFrame.MAXIMIZED_BOTH);
+        });
         
         System.out.println("Arayüz başarıyla başlatıldı.");
     }
