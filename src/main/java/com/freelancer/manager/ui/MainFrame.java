@@ -87,6 +87,10 @@ public class MainFrame extends JFrame {
     private void initUI() {
         setLayout(new BorderLayout());
 
+        // Pomodoro bileşenleri sidebar'dan önce oluşturulmalı
+        lblPomodoro = new JLabel("25:00");
+        btnPomodoro = createStyledButton("▶ Odaklan", new Color(39, 174, 96));
+
         // ---- SOL MENÜ (Sidebar) ----
         JPanel sidebar = new JPanel();
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
@@ -190,10 +194,6 @@ public class MainFrame extends JFrame {
 
         JPanel pomodoroPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         pomodoroPanel.setOpaque(false);
-        lblPomodoro = new JLabel("25:00");
-        lblPomodoro.setFont(new Font("Monospaced", Font.BOLD, 24));
-        lblPomodoro.setForeground(new Color(192, 57, 43));
-        btnPomodoro = createStyledButton("▶ Odaklan", new Color(39, 174, 96));
 
         pSeconds = 25 * 60;
         pomodoroTimer = new Timer(1000, e -> {
@@ -741,10 +741,36 @@ public class MainFrame extends JFrame {
         JComboBox<String> cmbKategori = new JComboBox<>(kategoriler);
         if (gorev != null && gorev.getKategori() != null) cmbKategori.setSelectedItem(gorev.getKategori());
 
-        JTextField txtProjeAdi = new JTextField(gorev != null ? gorev.getProjeAdi() : "");
-        JTextField txtMusteri  = new JTextField(gorev != null ? gorev.getMusteri()   : "");
-        JTextField txtUcret    = new JTextField(gorev != null ? String.valueOf(gorev.getUcret()) : "0.0");
+        JTextField txtProjeAdi  = new JTextField(gorev != null ? gorev.getProjeAdi()  : "");
+        JTextField txtMusteri   = new JTextField(gorev != null ? gorev.getMusteri()   : "");
+        JTextField txtUcret     = new JTextField(gorev != null ? String.valueOf(gorev.getUcret()) : "0.0");
         JTextField txtEtiketler = new JTextField(gorev != null ? gorev.getEtiketler() : "");
+
+        // --- Karakter limitleri ---
+        limitText(txtProjeAdi,  100);   // zorunlu, max 100
+        limitText(txtMusteri,    50);   // max 50
+        limitText(txtEtiketler, 100);   // max 100
+        // Bütçe: sadece sayısal, 0 – 9 999 999
+        ((javax.swing.text.AbstractDocument) txtUcret.getDocument())
+                .setDocumentFilter(new javax.swing.text.DocumentFilter() {
+            private boolean valid(String s) {
+                if (s.isEmpty()) return true;
+                try { double v = Double.parseDouble(s); return v >= 0 && v <= 9_999_999; }
+                catch (NumberFormatException ex) { return s.equals("-") || s.matches("[0-9]*\\.?"); }
+            }
+            public void insertString(FilterBypass fb, int off, String text, javax.swing.text.AttributeSet a)
+                    throws javax.swing.text.BadLocationException {
+                String cur = fb.getDocument().getText(0, fb.getDocument().getLength());
+                String next = cur.substring(0, off) + text + cur.substring(off);
+                if (valid(next)) super.insertString(fb, off, text, a);
+            }
+            public void replace(FilterBypass fb, int off, int len, String text, javax.swing.text.AttributeSet a)
+                    throws javax.swing.text.BadLocationException {
+                String cur = fb.getDocument().getText(0, fb.getDocument().getLength());
+                String next = cur.substring(0, off) + (text != null ? text : "") + cur.substring(off + len);
+                if (valid(next)) super.replace(fb, off, len, text, a);
+            }
+        });
 
         // İlerleme spinner
         JSpinner spnIlerleme = new JSpinner(new SpinnerNumberModel(gorev != null ? gorev.getIlerleme() : 0, 0, 100, 5));
@@ -767,6 +793,17 @@ public class MainFrame extends JFrame {
 
         JTextArea txtNotlar = new JTextArea(gorev != null ? gorev.getNotlar() : "", 4, 20);
         txtNotlar.setLineWrap(true); txtNotlar.setWrapStyleWord(true);
+        limitText(txtNotlar, 500);
+        JLabel lblNotCount = new JLabel((gorev != null && gorev.getNotlar() != null ? gorev.getNotlar().length() : 0) + "/500");
+        lblNotCount.setFont(new Font("SansSerif", Font.PLAIN, 10));
+        lblNotCount.setForeground(Color.GRAY);
+        lblNotCount.setHorizontalAlignment(SwingConstants.RIGHT);
+        txtNotlar.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            void update() { lblNotCount.setText(txtNotlar.getText().length() + "/500"); }
+            public void insertUpdate(javax.swing.event.DocumentEvent e)  { update(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e)  { update(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { update(); }
+        });
 
         // Durum ↔ İlerleme otomatik senkronizasyonu
         cmbDurum.addItemListener(e -> {
@@ -839,6 +876,8 @@ public class MainFrame extends JFrame {
         gbc.gridy = row++; mainPanel.add(new JLabel("Notlar / Açıklama:"), gbc);
         gbc.gridy = row++; gbc.weighty = 1.0; gbc.fill = GridBagConstraints.BOTH;
         mainPanel.add(new JScrollPane(txtNotlar), gbc);
+        gbc.gridy = row++; gbc.weighty = 0; gbc.fill = GridBagConstraints.HORIZONTAL;
+        mainPanel.add(lblNotCount, gbc);
 
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton btnKaydet = createStyledButton("Kaydet", new Color(41, 128, 185));
@@ -850,8 +889,27 @@ public class MainFrame extends JFrame {
         dialog.add(btnPanel, BorderLayout.SOUTH);
 
         btnKaydet.addActionListener(e -> {
+            // --- Validasyon ---
+            String projeAdiVal = txtProjeAdi.getText().trim();
+            if (projeAdiVal.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Proje adı boş olamaz.", "Eksik Bilgi", JOptionPane.WARNING_MESSAGE);
+                txtProjeAdi.requestFocus(); return;
+            }
+            String ucretStr = txtUcret.getText().trim();
+            double ucretVal = 0.0;
+            if (!ucretStr.isEmpty()) {
+                try {
+                    ucretVal = Double.parseDouble(ucretStr);
+                    if (ucretVal < 0 || ucretVal > 9_999_999) {
+                        JOptionPane.showMessageDialog(dialog, "Bütçe 0 ile 9.999.999 ₺ arasında olmalıdır.", "Geçersiz Değer", JOptionPane.WARNING_MESSAGE);
+                        txtUcret.requestFocus(); return;
+                    }
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(dialog, "Bütçe geçerli bir sayı olmalıdır.", "Geçersiz Değer", JOptionPane.WARNING_MESSAGE);
+                    txtUcret.requestFocus(); return;
+                }
+            }
             try {
-                double ucretVal = txtUcret.getText().trim().isEmpty() ? 0.0 : Double.parseDouble(txtUcret.getText().trim());
                 String teslimTarihi = new SimpleDateFormat("dd.MM.yyyy HH:mm").format((Date) spnTarih.getValue());
                 String yeniDurum = (String) cmbDurum.getSelectedItem();
                 int ilerleme = (Integer) spnIlerleme.getValue();
@@ -1073,6 +1131,23 @@ public class MainFrame extends JFrame {
         btn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
+    }
+
+    /** Bir text bileşenine maksimum karakter sınırı uygular. */
+    private static void limitText(javax.swing.text.JTextComponent tc, int max) {
+        ((javax.swing.text.AbstractDocument) tc.getDocument())
+                .setDocumentFilter(new javax.swing.text.DocumentFilter() {
+            public void insertString(FilterBypass fb, int off, String text, javax.swing.text.AttributeSet a)
+                    throws javax.swing.text.BadLocationException {
+                if (fb.getDocument().getLength() + text.length() <= max)
+                    super.insertString(fb, off, text, a);
+            }
+            public void replace(FilterBypass fb, int off, int len, String text, javax.swing.text.AttributeSet a)
+                    throws javax.swing.text.BadLocationException {
+                int newLen = fb.getDocument().getLength() - len + (text != null ? text.length() : 0);
+                if (newLen <= max) super.replace(fb, off, len, text, a);
+            }
+        });
     }
 
     private JLabel createDashboardLabel(String title, String value, Color color, int valueFontSize) {
