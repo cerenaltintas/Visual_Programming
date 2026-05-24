@@ -1,0 +1,8 @@
+target/
+*.db
+*.zip
+jdk/
+lib/
+.vscode/
+screenshot*.png
+ss*.png
