@@ -71,7 +71,8 @@ public class MainFrame extends JFrame {
     public MainFrame() {
         dao = new GorevDAO();
         setTitle("ProPortal - Kurumsal Yönetim & Ajanda Sistemi");
-        setSize(1200, 800);
+        setSize(1366, 768);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         initUI();
@@ -101,8 +102,8 @@ public class MainFrame extends JFrame {
         JPanel sidebar = new JPanel();
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
         sidebar.setBackground(new Color(44, 62, 80));
-        sidebar.setPreferredSize(new Dimension(210, 0));
-        sidebar.setBorder(BorderFactory.createEmptyBorder(30, 15, 30, 15));
+        sidebar.setPreferredSize(new Dimension(170, 0));
+        sidebar.setBorder(BorderFactory.createEmptyBorder(16, 8, 16, 8));
 
         JLabel logo = new JLabel("⚡ ProPortal");
         logo.setFont(new Font("SansSerif", Font.BOLD, 26));
@@ -136,7 +137,7 @@ public class MainFrame extends JFrame {
 
         // Öncelik filtre başlığı
         sidebar.add(Box.createRigidArea(new Dimension(0, 15)));
-        JLabel lblPri = new JLabel("  ÖNCELİK FİLTRESİ");
+        JLabel lblPri = new JLabel("  ÖNCELİK");
         lblPri.setForeground(new Color(149, 165, 166));
         lblPri.setFont(new Font("SansSerif", Font.BOLD, 11));
         lblPri.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -197,11 +198,17 @@ public class MainFrame extends JFrame {
         JButton btnThemeToggle = createSidebarButton("🌙 Karanlık Mod");
         btnThemeToggle.addActionListener(e -> toggleTheme(btnThemeToggle));
         sidebar.add(btnThemeToggle);
-        add(sidebar, BorderLayout.WEST);
+        JScrollPane sidebarScroll = new JScrollPane(sidebar,
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        sidebarScroll.setPreferredSize(new Dimension(175, 0));
+        sidebarScroll.setBorder(null);
+        sidebarScroll.getVerticalScrollBar().setUnitIncrement(12);
+        add(sidebarScroll, BorderLayout.WEST);
 
         // ---- ORTA İÇERİK ----
-        JPanel centerContainer = new JPanel(new BorderLayout(8, 8));
-        centerContainer.setBorder(BorderFactory.createEmptyBorder(10, 10, 5, 10));
+        JPanel centerContainer = new JPanel(new BorderLayout(6, 6));
+        centerContainer.setBorder(BorderFactory.createEmptyBorder(6, 6, 4, 6));
 
         // Üst: Pomodoro + Dashboard
         JPanel topContainer = new JPanel(new BorderLayout(5, 0));
@@ -244,11 +251,11 @@ public class MainFrame extends JFrame {
             }
         });
         // Dashboard istatistik kartları — tüm genişliği kullanır
-        JPanel dashboardStats = new JPanel(new GridLayout(1, 5, 8, 0));
-        lblTotal      = createDashboardLabel("Toplam",     "0", new Color(41,  128, 185), 28);
-        lblTodo       = createDashboardLabel("Bekleyen",   "0", new Color(231,  76,  60), 28);
-        lblInProgress = createDashboardLabel("Devam Eden", "0", new Color(243, 156,  18), 28);
-        lblDone       = createDashboardLabel("Tamamlanan", "0", new Color(39,  174,  96), 28);
+        JPanel dashboardStats = new JPanel(new GridLayout(0, 5, 4, 0));
+        lblTotal      = createDashboardLabel(dashboardStats, "Toplam",     "0", new Color(41,  128, 185), 28);
+        lblTodo       = createDashboardLabel(dashboardStats, "Bekleyen",   "0", new Color(231,  76,  60), 28);
+        lblInProgress = createDashboardLabel(dashboardStats, "Devam Eden", "0", new Color(243, 156,  18), 28);
+        lblDone       = createDashboardLabel(dashboardStats, "Tamamlanan", "0", new Color(39,  174,  96), 28);
 
         // Toplam Bütçe kartı — tek kutu, 4 satır
         JPanel budgetCard = new JPanel(new BorderLayout(0, 2));
@@ -290,10 +297,6 @@ public class MainFrame extends JFrame {
         budgetCard.add(lblBudgetTotal, BorderLayout.CENTER);
         budgetCard.add(budgetRows,    BorderLayout.SOUTH);
 
-        dashboardStats.add(lblTotal.getParent());
-        dashboardStats.add(lblTodo.getParent());
-        dashboardStats.add(lblInProgress.getParent());
-        dashboardStats.add(lblDone.getParent());
         dashboardStats.add(budgetCard);
         topContainer.add(dashboardStats, BorderLayout.CENTER);
 
@@ -619,7 +622,7 @@ public class MainFrame extends JFrame {
         for (Gorev g : gorevler) {
             String kalanGunStr = computeKalanGun(g, now);
             boolean isIs = "İş".equals(g.getKategori());
-            String budgetStr = isIs ? String.format("%.2f ₺", g.getUcret()) : "-";
+            String budgetStr = isIs ? String.format("%,.0f ₺", g.getUcret()) : "-";
             Object[] row = {
                 g.getId(), g.getKategori(), g.getProjeAdi(),
                 budgetStr,
@@ -815,9 +818,10 @@ public class MainFrame extends JFrame {
         // İlerleme spinner — 0..100 arası, yazarak girildiğinde da sınırlanır
         JSpinner spnIlerleme = new JSpinner(new SpinnerNumberModel(gorev != null ? gorev.getIlerleme() : 0, 0, 100, 5));
         JFormattedTextField spnEditor = ((JSpinner.DefaultEditor) spnIlerleme.getEditor()).getTextField();
-        JLabel lblIlerlemWarn = new JLabel(" ");
+        JLabel lblIlerlemWarn = new JLabel();
         lblIlerlemWarn.setFont(new Font("SansSerif", Font.PLAIN, 10));
         lblIlerlemWarn.setForeground(new Color(231, 76, 60));
+        lblIlerlemWarn.setVisible(false);
         // focusLost'ta formatter değeri otomatik düzeltmeden ÖNCE ham metni sakla
         String[] lastRawSpn = {String.valueOf(gorev != null ? gorev.getIlerleme() : 0)};
         spnEditor.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -834,10 +838,11 @@ public class MainFrame extends JFrame {
                 catch (NumberFormatException ex) { bad = !t.isEmpty(); }
                 if (bad) {
                     spnEditor.setBorder(BorderFactory.createLineBorder(new Color(231, 76, 60), 2));
-                    lblIlerlemWarn.setText("Geçerli değer girin: 0 ile 100 arasında olmalıdır.");
+                    lblIlerlemWarn.setText("Geçerli değer: 0–100 arası olmalıdır.");
+                    lblIlerlemWarn.setVisible(true);
                 } else {
                     spnEditor.setBorder(null);
-                    lblIlerlemWarn.setText(" ");
+                    lblIlerlemWarn.setVisible(false);
                 }
             }
             public void insertUpdate(javax.swing.event.DocumentEvent e)  { check(); }
@@ -973,6 +978,12 @@ public class MainFrame extends JFrame {
         dialog.setLayout(new BorderLayout());
         dialog.add(mainPanel, BorderLayout.CENTER);
         dialog.add(btnPanel, BorderLayout.SOUTH);
+        // ESC ile dialogu kapat
+        dialog.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "closeDialog");
+        dialog.getRootPane().getActionMap().put("closeDialog",
+                new AbstractAction() { public void actionPerformed(ActionEvent e) { dialog.dispose(); } });
+        btnIptal.addActionListener(e -> dialog.dispose());
 
         btnKaydet.addActionListener(e -> {
             // --- Validasyon ---
@@ -1219,11 +1230,11 @@ public class MainFrame extends JFrame {
 
     private JButton createStyledButton(String text, Color bgColor) {
         JButton btn = new JButton(text);
-        btn.setFont(new Font("SansSerif", Font.BOLD, 14));
+        btn.setFont(new Font("SansSerif", Font.BOLD, 12));
         btn.setForeground(Color.WHITE);
         btn.setBackground(bgColor);
         btn.setFocusPainted(false);
-        btn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        btn.setBorder(BorderFactory.createEmptyBorder(7, 14, 7, 14));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return btn;
     }
@@ -1778,7 +1789,7 @@ public class MainFrame extends JFrame {
         });
     }
 
-    private JLabel createDashboardLabel(String title, String value, Color color, int valueFontSize) {
+    private JLabel createDashboardLabel(JPanel container, String title, String value, Color color, int valueFontSize) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(false);
         panel.setBorder(BorderFactory.createCompoundBorder(
@@ -1795,6 +1806,7 @@ public class MainFrame extends JFrame {
         lblVal.setHorizontalAlignment(SwingConstants.CENTER);
         panel.add(lblTitle, BorderLayout.NORTH);
         panel.add(lblVal, BorderLayout.CENTER);
+        container.add(panel);
         return lblVal;
     }
 }
